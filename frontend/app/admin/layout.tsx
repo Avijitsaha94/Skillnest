@@ -94,7 +94,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button onClick={toggleTheme} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]">
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
+            <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
           </div>
         </header>
         <main className="flex-1 overflow-y-auto bg-[var(--bg)] p-6">{children}</main>
