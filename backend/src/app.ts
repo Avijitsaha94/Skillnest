@@ -36,7 +36,13 @@ app.use(clerkMiddleware());
 
 // Rate limiter
 app.use('/api', generalLimiter);
-
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: '🚀 SkillNest Backend API is running!',
+    health: '/health',
+  });
+});
 // Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), env: env.NODE_ENV });
