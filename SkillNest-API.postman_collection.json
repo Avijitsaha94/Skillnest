@@ -1,0 +1,500 @@
+{
+  "info": {
+    "name": "SkillNest API",
+    "_postman_id": "skillnest-api-collection-v1",
+    "description": "Complete API collection for SkillNest — AI-powered online learning platform.\n\n## Setup\n1. Set `baseUrl` variable: `http://localhost:5000`\n2. Set `authToken` variable after login via Clerk\n3. Run seed script first: `npm run seed`\n\n## Demo credentials\n- User: user@skillnest.com / Demo1234!\n- Admin: admin@skillnest.com / Admin1234!",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "authToken", "value": "YOUR_CLERK_JWT_TOKEN", "type": "string" },
+    { "key": "courseId", "value": "", "type": "string" },
+    { "key": "reviewId", "value": "", "type": "string" },
+    { "key": "blogSlug", "value": "nextjs-14-app-router-guide", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🔍 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "description": "Check if the API server is running."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📚 Courses — Public",
+      "item": [
+        {
+          "name": "Get All Courses",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/courses?page=1&limit=12&sort=newest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "12" },
+                { "key": "sort", "value": "newest", "description": "newest | rating | popular | price_asc | price_desc" }
+              ]
+            },
+            "description": "List all published courses with pagination."
+          }
+        },
+        {
+          "name": "Search Courses",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/courses?search=react&category=Web Development&level=Intermediate&minPrice=0&maxPrice=100&rating=4&sort=rating&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "courses"],
+              "query": [
+                { "key": "search", "value": "react" },
+                { "key": "category", "value": "Web Development" },
+                { "key": "level", "value": "Intermediate" },
+                { "key": "minPrice", "value": "0" },
+                { "key": "maxPrice", "value": "100" },
+                { "key": "rating", "value": "4" },
+                { "key": "sort", "value": "rating" },
+                { "key": "page", "value": "1" }
+              ]
+            },
+            "description": "Full-text search with filters: category, level, price range, rating."
+          }
+        },
+        {
+          "name": "Get Top Rated Courses",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/courses/top",
+            "description": "Returns top 8 highest-rated published courses for the landing page."
+          }
+        },
+        {
+          "name": "Get Course Stats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/courses/stats",
+            "description": "Returns course count by category and level distribution."
+          }
+        },
+        {
+          "name": "Get Course Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/courses/{{courseId}}",
+            "description": "Get full course details including instructor info. Replace {{courseId}} with a real MongoDB ObjectId from seed data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📚 Courses — Protected",
+      "item": [
+        {
+          "name": "Enroll in Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{courseId}}/enroll",
+            "description": "Enroll the logged-in user in a course. Requires Clerk JWT token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📚 Courses — Admin",
+      "item": [
+        {
+          "name": "Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Complete TypeScript Masterclass\",\n  \"description\": \"A comprehensive guide to TypeScript covering all features from basic types to advanced generics. You will build real projects and master the TypeScript ecosystem used at top companies.\",\n  \"shortDescription\": \"Master TypeScript from zero to hero with real projects.\",\n  \"thumbnail\": \"https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=600&h=400&fit=crop\",\n  \"images\": [],\n  \"category\": \"Web Development\",\n  \"level\": \"Intermediate\",\n  \"price\": 79,\n  \"duration\": 1800,\n  \"tags\": [\"typescript\", \"javascript\", \"web development\"],\n  \"outcomes\": [\n    \"Master TypeScript type system\",\n    \"Build type-safe applications\",\n    \"Use generics and advanced types\",\n    \"Integrate TypeScript with React\"\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/courses",
+            "description": "Admin/Manager only. Creates a new course."
+          }
+        },
+        {
+          "name": "Update Course",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 89,\n  \"isPublished\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/courses/{{courseId}}",
+            "description": "Admin/Manager only. Partial update of a course."
+          }
+        },
+        {
+          "name": "Delete Course",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/courses/{{courseId}}",
+            "description": "Admin only. Permanently deletes a course."
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/users/me",
+            "description": "Returns the logged-in user's profile from the database."
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"bio\": \"Full-stack developer passionate about building great products.\",\n  \"website\": \"https://johndoe.dev\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/me",
+            "description": "Update name, bio, and website. Email is managed by Clerk."
+          }
+        },
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Admin only. Paginated list of all users."
+          }
+        },
+        {
+          "name": "Change User Role (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"manager\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/USER_MONGODB_ID/role",
+            "description": "Admin only. Change a user's role. Values: user | manager | admin"
+          }
+        }
+      ]
+    },
+    {
+      "name": "⭐ Reviews",
+      "item": [
+        {
+          "name": "Get Course Reviews",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/course/{{courseId}}?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews", "course", "{{courseId}}"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Public. Get paginated reviews for a specific course."
+          }
+        },
+        {
+          "name": "Submit Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"This course is absolutely amazing! The instructor explains complex concepts clearly and the projects are very practical. I landed a new job after completing this course.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/reviews/course/{{courseId}}",
+            "description": "Must be enrolled in the course. One review per user per course."
+          }
+        },
+        {
+          "name": "Delete Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/reviews/{{reviewId}}",
+            "description": "Owner or admin can delete a review."
+          }
+        },
+        {
+          "name": "Get All Reviews (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/admin/all?page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews", "admin", "all"],
+              "query": [{ "key": "page", "value": "1" }]
+            },
+            "description": "Admin/Manager only. All reviews with user and course info."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🤖 AI Features",
+      "item": [
+        {
+          "name": "AI Content Generator",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Complete React & Next.js 14 Development Bootcamp\",\n  \"audience\": \"Junior developers who know JavaScript basics and want to build modern web apps\",\n  \"level\": \"Intermediate\"\n}"
+            },
+            "url": "{{baseUrl}}/api/ai/generate",
+            "description": "AI Feature 1: Generates course description, 5 learning outcomes, and 5 tags using GPT-4o-mini. Rate limited: 10 requests/minute."
+          }
+        },
+        {
+          "name": "AI Smart Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/ai/recommendations",
+            "description": "AI Feature 2: Returns 6 personalized course recommendations based on the user's enrollment history and completed categories."
+          }
+        },
+        {
+          "name": "AI Chat Assistant (SSE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "text/event-stream" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    { \"role\": \"user\", \"content\": \"What courses should I take to become a full-stack developer?\" }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/ai/chat",
+            "description": "AI Feature 3: Streaming chat assistant (SSE). Response streams as 'data: {delta}' events. Use EventSource in the browser for real-time streaming."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Dashboard",
+      "item": [
+        {
+          "name": "User Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/dashboard/user",
+            "description": "Returns enrolled/completed course counts and recent courses for the user dashboard."
+          }
+        },
+        {
+          "name": "Admin Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/dashboard/admin",
+            "description": "Admin/Manager only. Returns platform-wide stats: total courses, users, enrollments, revenue, charts data."
+          }
+        },
+        {
+          "name": "Admin Course List (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/admin/courses?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "admin", "courses"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Admin/Manager only. All courses (published and draft) for admin management table."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 Blogs",
+      "item": [
+        {
+          "name": "Get All Blog Posts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/blogs?page=1&limit=9",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blogs"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "9" }
+              ]
+            },
+            "description": "Public. Returns published blog posts with pagination."
+          }
+        },
+        {
+          "name": "Get Blog Post by Slug",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/blogs/{{blogSlug}}",
+            "description": "Public. Returns a single published blog post and increments view count."
+          }
+        },
+        {
+          "name": "Create Blog Post (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"10 Must-Know TypeScript Tricks for 2025\",\n  \"slug\": \"typescript-tricks-2025\",\n  \"excerpt\": \"TypeScript has become the standard for professional JavaScript development. Here are the tricks every developer should know.\",\n  \"content\": \"TypeScript adoption has crossed 80% among professional developers...\\n\\n## Utility Types\\n\\nTypeScript ships with powerful utility types like Partial, Required, Pick, and Omit...\\n\\n## Template Literal Types\\n\\nOne of the most powerful features introduced in TS 4.1...\",\n  \"thumbnail\": \"https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=400&fit=crop\",\n  \"tags\": [\"typescript\", \"javascript\", \"tips\"],\n  \"isPublished\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/blogs",
+            "description": "Admin/Manager only. Creates a new blog post."
+          }
+        },
+        {
+          "name": "Update Blog Post (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isPublished\": false\n}"
+            },
+            "url": "{{baseUrl}}/api/blogs/BLOG_MONGODB_ID",
+            "description": "Admin/Manager only. Partial update of a blog post."
+          }
+        },
+        {
+          "name": "Delete Blog Post (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/blogs/BLOG_MONGODB_ID",
+            "description": "Admin only. Permanently deletes a blog post."
+          }
+        },
+        {
+          "name": "Get All Blogs Including Drafts (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blogs/admin/all?page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blogs", "admin", "all"],
+              "query": [{ "key": "page", "value": "1" }]
+            },
+            "description": "Admin/Manager only. Returns all posts including unpublished drafts."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔔 Webhook",
+      "item": [
+        {
+          "name": "Clerk User Sync Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "svix-id", "value": "msg_test_123" },
+              { "key": "svix-timestamp", "value": "1620000000" },
+              { "key": "svix-signature", "value": "v1,YOUR_SVIX_SIGNATURE" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"user.created\",\n  \"data\": {\n    \"id\": \"user_test_123\",\n    \"email_addresses\": [\n      { \"email_address\": \"test@example.com\", \"id\": \"idn_1\" }\n    ],\n    \"primary_email_address_id\": \"idn_1\",\n    \"first_name\": \"Test\",\n    \"last_name\": \"User\",\n    \"image_url\": \"https://api.dicebear.com/7.x/avataaars/svg?seed=test\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/webhook/clerk",
+            "description": "Called automatically by Clerk when a user is created/updated. In production, Clerk sends this with valid svix headers. For testing, use the Clerk Dashboard webhook tester."
+          }
+        }
+      ]
+    }
+  ]
+}
