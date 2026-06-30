@@ -1,8 +1,9 @@
+
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser, UserButton, SignInButton } from "@clerk/nextjs";
+import { useUser, UserButton } from "@clerk/nextjs";
 import { useTheme } from "./ThemeProvider";
 import {
   Sun, Moon, Menu, X, BookOpen, Sparkles, ChevronDown,
@@ -34,13 +35,12 @@ const ADMIN_LINKS = [
 
 export function Navbar() {
   const { isSignedIn, user } = useUser();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, mounted } = useTheme();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Check if admin role stored in publicMetadata
   const role = (user?.publicMetadata?.role as string) ?? "user";
   const isAdmin = role === "admin" || role === "manager";
 
@@ -141,13 +141,17 @@ export function Navbar() {
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
-            {/* Theme toggle */}
+            {/* Theme toggle — mounted check avoids hydration mismatch */}
             <button
               onClick={toggleTheme}
               aria-label="Toggle theme"
               className="w-9 h-9 flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] transition-colors"
+              suppressHydrationWarning
             >
-              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {mounted
+                ? theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />
+                : <Moon className="w-4 h-4" />
+              }
             </button>
 
             {isSignedIn ? (
@@ -158,16 +162,14 @@ export function Navbar() {
                 >
                   <Sparkles className="w-3.5 h-3.5" /> AI Tools
                 </Link>
-                <UserButton
-                  afterSignOutUrl="/"
-                  appearance={{ elements: { avatarBox: "w-8 h-8" } }}
-                />
+                <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
               </div>
             ) : (
               <div className="hidden md:flex items-center gap-2">
-                <SignInButton mode="modal">
-                  <button className="btn-secondary !py-2 !px-4 !text-sm">Log in</button>
-                </SignInButton>
+                {/* FIX: Link to our custom /sign-in page — NOT SignInButton modal */}
+                <Link href="/sign-in" className="btn-secondary !py-2 !px-4 !text-sm">
+                  Log in
+                </Link>
                 <Link href="/sign-up" className="btn-primary !py-2 !px-4 !text-sm">
                   Get Started
                 </Link>
