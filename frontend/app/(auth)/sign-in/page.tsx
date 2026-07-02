@@ -152,19 +152,23 @@ export default function SignInPage() {
           </div>
 
           {/* Credentials */}
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-3 text-xs space-y-1.5">
-            <p className="text-gray-500 font-medium mb-1">Credentials:</p>
-            {DEMO_ACCOUNTS.map((acc) => (
-              <div key={acc.email} className="flex justify-between items-center">
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                  {acc.label}:
-                </span>
-                <span className="font-mono text-gray-500 dark:text-gray-400 text-[10px]">
-                  {acc.email}
-                </span>
-              </div>
-            ))}
-          </div>
+         
+<div className="bg-white dark:bg-gray-900 rounded-lg p-3 text-xs space-y-1.5">
+  <p className="text-gray-500 font-medium mb-1">Credentials:</p>
+  {DEMO_ACCOUNTS.map((acc) => (
+    <div key={acc.email} className="space-y-0.5 pb-2 border-b border-gray-100 dark:border-gray-800 last:border-0 last:pb-0">
+      <p className="font-bold text-gray-700 dark:text-gray-300">{acc.label}</p>
+      <div className="flex justify-between">
+        <span className="text-gray-500">Email:</span>
+        <span className="font-mono text-gray-700 dark:text-gray-300">{acc.email}</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-gray-500">Password:</span>
+        <span className="font-mono text-gray-700 dark:text-gray-300">{acc.password}</span>
+      </div>
+    </div>
+  ))}
+</div>
 
           {demoError && (
             <div className={`mt-3 p-2.5 rounded-lg border text-xs break-all ${
