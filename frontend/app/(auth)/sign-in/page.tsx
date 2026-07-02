@@ -30,6 +30,8 @@ export default function SignInPage() {
   const [loadingDemo, setLoadingDemo] = useState<string | null>(null);
   const [demoError, setDemoError] = useState("");
   const [showClerkForm, setShowClerkForm] = useState(false);
+  // Auto-fill state for manual form
+  const [autoFill, setAutoFill] = useState<{ email: string; password: string } | null>(null);
 
   const handleDemoLogin = async (
     email: string,
@@ -45,22 +47,33 @@ export default function SignInPage() {
         password: password,
       });
 
-      // ✅ DEBUG — F12 Console এ দেখো
-      console.log("STATUS:", signInAttempt?.status);
-      console.log("SESSION ID:", signInAttempt?.createdSessionId);
-      console.log("FULL OBJECT:", JSON.stringify(signInAttempt, null, 2));
+      const status = signInAttempt?.status;
+      const sessionId = signInAttempt?.createdSessionId;
 
-      if (signInAttempt?.status === "complete" && signInAttempt.createdSessionId) {
-        await clerk.setActive({ session: signInAttempt.createdSessionId });
+      if (status === "complete" && sessionId) {
+        // Perfect — direct login
+        await clerk.setActive({ session: sessionId });
         router.push("/dashboard");
         router.refresh();
-      } else {
-        // Status টাও দেখাবে error message এ
-        setDemoError(`Status: "${signInAttempt?.status}". Session: "${signInAttempt?.createdSessionId}"`);
+        return;
       }
+
+      if (status === "needs_client_trust" || status === "needs_second_factor") {
+        // Auto-fill the manual form and show it
+        setAutoFill({ email, password });
+        setDemoError(
+          "⚡ Credentials auto-filled below — click Sign In to continue."
+        );
+        return;
+      }
+
+      // Fallback
+      setAutoFill({ email, password });
+      setDemoError("⚡ Credentials auto-filled below — click Sign In to continue.");
+
     } catch (err: unknown) {
       const clerkErr = err as {
-        errors?: Array<{ longMessage?: string; message?: string; code?: string }>;
+        errors?: Array<{ longMessage?: string; message?: string }>;
         message?: string;
       };
       const msg =
@@ -68,10 +81,7 @@ export default function SignInPage() {
         clerkErr?.errors?.[0]?.message ??
         clerkErr?.message ??
         "Demo login failed.";
-      // Error code ও দেখাবে
-      const code = clerkErr?.errors?.[0]?.code ?? "unknown";
-      setDemoError(`Error [${code}]: ${msg}`);
-      console.error("CLERK ERROR:", clerkErr);
+      setDemoError(msg);
     } finally {
       setLoadingDemo(null);
     }
@@ -157,8 +167,12 @@ export default function SignInPage() {
           </div>
 
           {demoError && (
-            <div className="mt-3 p-2.5 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
-              <p className="text-red-600 dark:text-red-400 text-xs break-all">{demoError}</p>
+            <div className={`mt-3 p-2.5 rounded-lg border text-xs break-all ${
+              demoError.startsWith("⚡")
+                ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
+                : "bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
+            }`}>
+              {demoError}
             </div>
           )}
         </div>
@@ -171,7 +185,10 @@ export default function SignInPage() {
         </div>
 
         {!showClerkForm ? (
-          <SimpleSignInForm onSwitchToClerk={() => setShowClerkForm(true)} />
+          <SimpleSignInForm
+            onSwitchToClerk={() => setShowClerkForm(true)}
+            autoFill={autoFill}
+          />
         ) : (
           <div className="card overflow-hidden">
             <SignIn
@@ -205,13 +222,29 @@ export default function SignInPage() {
   );
 }
 
-/* ── Simple email/password form ── */
-function SimpleSignInForm({ onSwitchToClerk }: { onSwitchToClerk: () => void }) {
+/* ── Simple email/password form with auto-fill support ── */
+function SimpleSignInForm({
+  onSwitchToClerk,
+  autoFill,
+}: {
+  onSwitchToClerk: () => void;
+  autoFill: { email: string; password: string } | null;
+}) {
   const clerk = useClerk();
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({
+    email: autoFill?.email ?? "",
+    password: autoFill?.password ?? "",
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // autoFill আসলে form update করো
+  useState(() => {
+    if (autoFill) {
+      setForm({ email: autoFill.email, password: autoFill.password });
+    }
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -227,6 +260,8 @@ function SimpleSignInForm({ onSwitchToClerk }: { onSwitchToClerk: () => void }) 
         await clerk.setActive({ session: result.createdSessionId });
         router.push("/dashboard");
         router.refresh();
+      } else if (result?.status === "needs_client_trust") {
+        setError("Session trust issue. Please try again or use Google login.");
       }
     } catch (err: unknown) {
       const e = err as { errors?: Array<{ message?: string }> };
