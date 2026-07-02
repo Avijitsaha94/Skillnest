@@ -1,4 +1,3 @@
-
 "use client";
 import { SignIn, useClerk } from "@clerk/nextjs";
 import Link from "next/link";
@@ -41,30 +40,38 @@ export default function SignInPage() {
     setDemoError("");
 
     try {
-      // useClerk().client.signIn.create() — works in Clerk v7
       const signInAttempt = await clerk.client?.signIn?.create({
         identifier: email,
         password: password,
       });
+
+      // ✅ DEBUG — F12 Console এ দেখো
+      console.log("STATUS:", signInAttempt?.status);
+      console.log("SESSION ID:", signInAttempt?.createdSessionId);
+      console.log("FULL OBJECT:", JSON.stringify(signInAttempt, null, 2));
 
       if (signInAttempt?.status === "complete" && signInAttempt.createdSessionId) {
         await clerk.setActive({ session: signInAttempt.createdSessionId });
         router.push("/dashboard");
         router.refresh();
       } else {
-        setDemoError("Sign in incomplete. Please try the manual form.");
+        // Status টাও দেখাবে error message এ
+        setDemoError(`Status: "${signInAttempt?.status}". Session: "${signInAttempt?.createdSessionId}"`);
       }
     } catch (err: unknown) {
       const clerkErr = err as {
-        errors?: Array<{ longMessage?: string; message?: string }>;
+        errors?: Array<{ longMessage?: string; message?: string; code?: string }>;
         message?: string;
       };
       const msg =
         clerkErr?.errors?.[0]?.longMessage ??
         clerkErr?.errors?.[0]?.message ??
         clerkErr?.message ??
-        "Demo login failed. Make sure demo accounts exist in Clerk dashboard.";
-      setDemoError(msg);
+        "Demo login failed.";
+      // Error code ও দেখাবে
+      const code = clerkErr?.errors?.[0]?.code ?? "unknown";
+      setDemoError(`Error [${code}]: ${msg}`);
+      console.error("CLERK ERROR:", clerkErr);
     } finally {
       setLoadingDemo(null);
     }
@@ -151,7 +158,7 @@ export default function SignInPage() {
 
           {demoError && (
             <div className="mt-3 p-2.5 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
-              <p className="text-red-600 dark:text-red-400 text-xs">{demoError}</p>
+              <p className="text-red-600 dark:text-red-400 text-xs break-all">{demoError}</p>
             </div>
           )}
         </div>
@@ -163,7 +170,6 @@ export default function SignInPage() {
           <div className="flex-1 h-px bg-[var(--border)]" />
         </div>
 
-        {/* Manual / Clerk form toggle */}
         {!showClerkForm ? (
           <SimpleSignInForm onSwitchToClerk={() => setShowClerkForm(true)} />
         ) : (
